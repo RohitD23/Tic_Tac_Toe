@@ -12,7 +12,7 @@ public:
 
 	void render(int x, int y);
 
-	void load_button_media(std::string text, int fontSize);
+	void load_button_media(std::string text, int fontSize, SDL_Color textColor);
 
 	//Handles mouse event
 	void handleEvent(SDL_Event* e);

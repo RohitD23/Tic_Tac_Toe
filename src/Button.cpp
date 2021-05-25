@@ -5,6 +5,10 @@ Button::Button() {
 	box = { 0,0,0,0 };
 
 	buttonColor = { 0, 0, 0, 0 };
+	buttonDefaultColor = { 0, 0, 0, 0 };
+	buttonColorOnHover = { 0, 0, 0, 0 };
+	buttonColorOnMouseDown = { 0, 0, 0, 0 };
+	buttonColorOnMouseUp = { 0, 0, 0, 0 };
 
 	textColor = { 0, 0, 0, 0 };
 	textColorOnHover = { 0, 0, 0, 0 };
@@ -23,6 +27,10 @@ void Button::free() {
 	box = { 0,0,0,0 };
 
 	buttonColor = { 0, 0, 0, 0 };
+	buttonDefaultColor = { 0, 0, 0, 0 };
+	buttonColorOnHover = { 0, 0, 0, 0 };
+	buttonColorOnMouseDown = { 0, 0, 0, 0 };
+	buttonColorOnMouseUp = { 0, 0, 0, 0 };
 
 	textColor = { 0, 0, 0, 0 };
 	textColorOnHover = { 0, 0, 0, 0 };
@@ -39,32 +47,34 @@ void Button::set_button_dimensions(int width, int height) {
 	box.h = height;
 }
 
-void Button::load_button_media(std::string text, int fontSize) {
+void Button::load_button_media(std::string text, int fontSize,SDL_Color textColor) {
 
 	//Load Font file
 	*GameWindow.Get_Font() = TTF_OpenFont("assets/Font/Cocogoose.ttf", fontSize);
 
-	ButtonText.loadFromRenderedText(text, { 255, 255, 255 }, 500);
+	ButtonText.loadFromRenderedText(text, textColor, 500);
 
 }
 
 void Button::render(int x, int y) {
 
-	box.x = x;
-	box.y = y;
+	if (this != nullptr) {
+		box.x = x;
+		box.y = y;
 
-	//Render Rectangle
-	SDL_SetRenderDrawColor(GameWindow.Get_Renderer(), buttonColor.r, buttonColor.g, buttonColor.b, buttonColor.a);
-	SDL_RenderFillRect(GameWindow.Get_Renderer(), &box);
+		//Render Rectangle
+		SDL_SetRenderDrawColor(GameWindow.Get_Renderer(), buttonColor.r, buttonColor.g, buttonColor.b, buttonColor.a);
+		SDL_RenderFillRect(GameWindow.Get_Renderer(), &box);
 
-	//Render text inside button
-	ButtonText.renderTexture(nullptr, x, y);
+		//Render text inside button
+		ButtonText.renderTexture(nullptr, x, y);
+	}
 }
 
 void Button::handleEvent(SDL_Event* e) {
 
 	//If mouse event happened
-	if (e->type == SDL_MOUSEMOTION || e->type == SDL_MOUSEBUTTONDOWN || e->type == SDL_MOUSEBUTTONUP) {
+	if (this != nullptr && (e->type == SDL_MOUSEMOTION || e->type == SDL_MOUSEBUTTONDOWN || e->type == SDL_MOUSEBUTTONUP)) {
 
 		//Get mouse position
 		int x, y;
@@ -122,6 +132,7 @@ void Button::handleEvent(SDL_Event* e) {
 			buttonColor = buttonDefaultColor;
 		}
 	}
+	
 
 }
 

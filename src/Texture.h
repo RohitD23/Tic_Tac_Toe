@@ -28,9 +28,6 @@ public:
 	* wrap - How much words to fit in one line
 	*/
 
-	//To create texture from surface
-	void loadTextureFromSurface(SDL_Surface* surface);
-
 	//Render assets on window
 	void renderTexture(SDL_Rect* clip, int x, int y);
 	/*

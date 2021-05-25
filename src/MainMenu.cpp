@@ -31,34 +31,34 @@ void MainMenu::load_media() {
 void MainMenu::load_buttons() {
 	
 	//Load Play Button media
-	play.load_button_media("Play", 60);
+	play.load_button_media("Play", 60, { 255,255,255 });
 	
 	play.setDefaultColor({ 0, 135, 175, 255 }, { 255, 255, 255, 255 });
 	play.set_button_dimensions(play.get_Width(), play.get_Height());
 	
-	play.setColorOnHover({ 0, 135, 175, 255 }, { 255, 80, 0, 255 });
-	play.setColorOnMouseDown({ 0, 135, 175, 255 }, { 255, 0, 0, 255 });
-	play.setColorOnMouseUp({ 0, 135, 175, 255 }, { 255, 80, 0, 255 });
+	play.setColorOnHover({ 0, 135, 175, 255 }, { 255, 110, 0, 255 });
+	play.setColorOnMouseDown({ 0, 135, 175, 255 }, { 255, 50, 0, 255 });
+	play.setColorOnMouseUp({ 0, 135, 175, 255 }, { 255, 110, 0, 255 });
 
 	//Load Sound Button media
-	sound.load_button_media("Sound : Off", 60);
+	sound.load_button_media("Sound : Off", 60, { 255, 255, 255, 255 });
 
 	sound.setDefaultColor({ 0, 135, 175, 255 }, { 255, 255, 255, 255 });
 	sound.set_button_dimensions(sound.get_Width(), sound.get_Height());
 
-	sound.setColorOnHover({ 0, 135, 175, 255 }, { 255, 80, 0, 255 });
-	sound.setColorOnMouseDown({ 0, 135, 175, 255 }, { 255, 0, 0, 255 });
+	sound.setColorOnHover({ 0, 135, 175, 255 }, { 255, 110, 0, 255 });
+	sound.setColorOnMouseDown({ 0, 135, 175, 255 }, { 255, 50, 0, 255 });
 	sound.setColorOnMouseUp({ 0, 135, 175, 255 }, { 255, 80, 0, 255 });
 
 	// Load Exit Button media
-    exit.load_button_media("Exit", 60);
+    exit.load_button_media("Exit", 60, { 255,255,255 });
 
 	exit.setDefaultColor({ 0, 135, 175, 255 }, { 255, 255, 255, 255 });
 	exit.set_button_dimensions(exit.get_Width(), exit.get_Height());
 
-	exit.setColorOnHover({ 0, 135, 175, 255 }, { 255, 80, 0, 255 });
-	exit.setColorOnMouseDown({ 0, 135, 175, 255 }, {255, 0, 0, 255});
-	exit.setColorOnMouseUp({ 0, 135, 175, 255 }, {255, 80, 0, 255});
+	exit.setColorOnHover({ 0, 135, 175, 255 }, { 255, 110, 0, 255 });
+	exit.setColorOnMouseDown({ 0, 135, 175, 255 }, {255, 50, 0, 255});
+	exit.setColorOnMouseUp({ 0, 135, 175, 255 }, {255, 110, 0, 255});
 }
 
 void MainMenu::render() {
@@ -89,7 +89,7 @@ void MainMenu::handleEvent(SDL_Event* e) {
 }
 
 void MainMenu::changeSoundText(std::string text) {
-	sound.load_button_media(text, 60);
+	sound.load_button_media(text, 60, { 255, 255, 255, 255 });
 }
 
 bool MainMenu::checkTextureLoaded() {

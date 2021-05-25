@@ -57,30 +57,6 @@ void Texture::load_media_from_file(std::string path) {
 	}
 }
 
-void Texture::loadTextureFromSurface(SDL_Surface* surface) {
-	//Get rid of preexisting texture
-	free();
-
-	//Create texture from surface
-	texture = SDL_CreateTextureFromSurface(GameWindow.Get_Renderer(), surface);
-
-	try {
-		//Check if texture loaded
-		if (texture == nullptr)
-			throw (std::string("Enable to load particle texture SDL ERROR : ") + std::string(SDL_GetError()));
-
-		else {
-			//Initialize H & W with H & W of surface
-			tHeight = surface->h;
-			tWidth = surface->w;
-		}
-	}
-
-	catch (std::string& ex) {
-		std::cerr << ex << std::endl;
-	}
-}
-
 void Texture::loadFromRenderedText(std::string textureText, SDL_Color textColor, int wrap)
 {
 	//Get rid of preexisting texture
@@ -124,17 +100,19 @@ void Texture::loadFromRenderedText(std::string textureText, SDL_Color textColor,
 
 void Texture::renderTexture(SDL_Rect* clip, int x, int y) {
 
-	//Rectangle to render asset at x and y on window with W & H of asset
-	SDL_Rect destination{ x, y, tWidth, tHeight };
+	if (this != nullptr) {
+		//Rectangle to render asset at x and y on window with W & H of asset
+		SDL_Rect destination{ x, y, tWidth, tHeight };
 
-	//To change H & W to render part of asset of Clip H & W
-	if (clip != nullptr) {
-		destination.w = clip->w;
-		destination.h = clip->h;
+		//To change H & W to render part of asset of Clip H & W
+		if (clip != nullptr) {
+			destination.w = clip->w;
+			destination.h = clip->h;
+		}
+
+		//Render Asset on window
+		SDL_RenderCopy(GameWindow.Get_Renderer(), texture, clip, &destination);
 	}
-
-	//Render Asset on window
-	SDL_RenderCopy(GameWindow.Get_Renderer(), texture, clip, &destination);
 
 }
 

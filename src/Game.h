@@ -1,6 +1,12 @@
 ﻿#pragma once
 #include "Texture.h"
 #include "Button.h"
+#include "Data.h"
+
+struct GridElements {
+	Texture* x_o_image;
+	char x_o;
+};
 
 class Game {
 public:
@@ -14,20 +20,32 @@ public:
 
 	void render();
 
-	void handleEvent(SDL_Event* e);
+	void handleEvent(SDL_Event* e, Player* currentPlayer);
 
 	bool checkTextureLoaded();
 
+	bool checkButtonPressed(Player* currentPlayer);
+
 private:
 	//No. of Boxes on board
-	const int static TOTAL_BOX = 9;
+	const int static TOTAL_BOX = 3 ;
 
 	//Board image
 	Texture board;
 
 	//Represents each box in board
-	Button* boardSquare[TOTAL_BOX];
+	Button* gridBoxes[TOTAL_BOX][TOTAL_BOX];
 
-	void loadBoxes();
-	void renderBoxes();
+	//To display X or O image
+	GridElements* gridElements[TOTAL_BOX][TOTAL_BOX];
+
+	//Score board
+	Texture scoreBoard;
+
+	void loadGridBoxes();
+	void renderGridBoxes();
+
+	void loadGridElements();
+	void renderGridElements();
+
 };
