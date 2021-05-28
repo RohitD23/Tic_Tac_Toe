@@ -17,9 +17,9 @@ public:
 	void handleEvent(SDL_Event* e);
 
 	//To check button is pressed
-	bool checkPlayButtonPressed() { return play.get_isButtonPressed(); }
-	bool checkSoundButtonPressed() { return sound.get_isButtonPressed(); }
-	bool checkExitButtonPressed() { return exit.get_isButtonPressed(); }
+	bool isPlayButtonPressed() { return play.get_isButtonPressed(); }
+	bool isSoundButtonPressed() { return sound.get_isButtonPressed(); }
+	bool isExitButtonPressed() { return exit.get_isButtonPressed(); }
 
 	void setPlayButton(bool buttonPresssed) { play.set_isButtonPressed(buttonPresssed); }
 	void setSoundButton(bool buttonPresssed) { sound.set_isButtonPressed(buttonPresssed); }
@@ -28,7 +28,7 @@ public:
 	void changeSoundText(std::string text);
 
 	//Check if media is empty or not
-	bool checkTextureLoaded();
+	bool isTextureLoaded();
 
 private:
 	//Title text

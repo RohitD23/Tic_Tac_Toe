@@ -2,6 +2,7 @@
 #include "MainMenu.h"
 #include "Game.h"
 #include "Data.h"
+#include "RoundSelect.h"
 
 Screen currentScreen = Screen::MENU_SCREEN;
 
@@ -14,10 +15,12 @@ void close(Mix_Music* music);
 void loadMusic(Mix_Music* music, bool& isMusicPlaying);
 
 //Check if button is pressed in Menu
-void checkMenuButtonPressed(MainMenu& menu, Mix_Music* music, bool& isMusicPlaying);
+void isMenuButtonPressed(MainMenu& menu, Mix_Music* music, bool& isMusicPlaying);
 
 //Check if player played
-void checkPlayerPlayed(Game& game, Player** currentPlayer, Player** otherPlayer);
+void hasPlayerPlayed(Game& game, Player** currentPlayer, Player** otherPlayer, AIStratergy& stratergy);
+//Get what A.I played
+void GetAIMove(Game& game, Player* currentPlayer, AIStratergy& stratergy);
 
 //Initialize data of players
 void initializePlayers(Player* player1, Player* player2);
@@ -33,10 +36,14 @@ void PlayGame() {
 
 	MainMenu menu;
 	Game game;
+	RoundSelect roundSelect;
 
 	//Create Player
 	Player player1;
 	Player player2;
+
+	//To decide how AI plays
+	AIStratergy stratergy = AIStratergy::AS_NONE;
 
 	initializePlayers(&player1, &player2);
 
@@ -47,10 +54,14 @@ void PlayGame() {
 	if (rand() % 2 != 0) {
 		currentPlayer = &player1;
 		otherPlayer = &player2;
+
+		stratergy = AIStratergy::AS_DEFENCE;
 	}
 	else {
 		currentPlayer = &player2;
 		otherPlayer = &player1;
+
+		stratergy = AIStratergy::AS_ATTACK;
 	}
 
 	//For music
@@ -82,6 +93,11 @@ void PlayGame() {
 				menu.handleEvent(&e);
 			}
 
+			else if (currentScreen == Screen::ROUND_SELECT) {
+				//Select Number of rounds
+				roundSelect.handleEvent(&e);
+			}
+
 			else if (currentScreen == Screen::GAME_SCREEN) {
 				//Game events
 				game.handleEvent(&e, currentPlayer);
@@ -94,14 +110,18 @@ void PlayGame() {
 			if (currentScreen == Screen::MENU_SCREEN) {
 
 				//Freeing memory as we are not in game
-				if(game.checkTextureLoaded())
+				if(game.isTextureLoaded())
 					game.free();
 
+				//Freeing memory as we are not in round select screen
+				if (roundSelect.isTextureLoaded())
+					roundSelect.free();
+
 				//Check if media is loaded or not
-				if (!menu.checkTextureLoaded())
+				if (!menu.isTextureLoaded())
 					menu.load_media();
 
-				checkMenuButtonPressed(menu, music, isMusicPlaying);
+				isMenuButtonPressed(menu, music, isMusicPlaying);
 
 				//Render menu
 				menu.render();
@@ -110,16 +130,38 @@ void PlayGame() {
 			else if (currentScreen == Screen::EXIT)
 				break;
 
-			else if (currentScreen == Screen::GAME_SCREEN) {
+			else if (currentScreen == Screen::ROUND_SELECT) {
+
+				//Freeing memory as we are not in game
+				if (game.isTextureLoaded())
+					game.free();
+
 				//Freeing the memory as we are not on menu screen
-				if(menu.checkTextureLoaded())
+				if (menu.isTextureLoaded())
 					menu.free();
 
+				//Check if round select is loaded or not
+				if (!roundSelect.isTextureLoaded())
+					roundSelect.loadMedia();
+
+				//Render round select
+				roundSelect.render();
+			}
+
+			else if (currentScreen == Screen::GAME_SCREEN) {
+				//Freeing the memory as we are not on menu screen
+				if(menu.isTextureLoaded())
+					menu.free();
+
+				//Freeing memory as we are not in round select screen
+				if (roundSelect.isTextureLoaded())
+					roundSelect.free();
+
 				//Check if game is loaded or not
-				if (!game.checkTextureLoaded())
+				if (!game.isTextureLoaded())
 					game.loadMedia();
 
-				checkPlayerPlayed(game, &currentPlayer, &otherPlayer);
+				hasPlayerPlayed(game, &currentPlayer, &otherPlayer, stratergy);
 
 				//Render game
 				game.render();
@@ -130,12 +172,15 @@ void PlayGame() {
 
 	}
 
+	currentPlayer = nullptr;
+	otherPlayer = nullptr;
+
 	close(music);
 }
 
 void loadMusic(Mix_Music* music, bool& isMusicPlaying) {
 	//Load music
-	music = Mix_LoadMUS("assets/Audio/BackgroundMusic.wav");
+	music = Mix_LoadMUS("assets/Audio/BackgroundMusic.mp3");
 	try {
 		if (music == nullptr)
 			throw (std::string("Failed to load beat music! SDL_mixer Error: ") + std::string(Mix_GetError()));
@@ -149,16 +194,16 @@ void loadMusic(Mix_Music* music, bool& isMusicPlaying) {
 	isMusicPlaying = true;
 }
 
-void checkMenuButtonPressed(MainMenu& menu, Mix_Music* music, bool& isMusicPlaying) {
+void isMenuButtonPressed(MainMenu& menu, Mix_Music* music, bool& isMusicPlaying) {
 
 	//TO load game screen
-	if (menu.checkPlayButtonPressed()) {
-		currentScreen = Screen::GAME_SCREEN;
+	if (menu.isPlayButtonPressed()) {
+		currentScreen = Screen::ROUND_SELECT;
 		menu.setPlayButton(false);
 	}
 
 	//To set sound on or off
-	else if (menu.checkSoundButtonPressed()) {
+	else if (menu.isSoundButtonPressed()) {
 
 		if (isMusicPlaying == true) {
 	        
@@ -178,7 +223,7 @@ void checkMenuButtonPressed(MainMenu& menu, Mix_Music* music, bool& isMusicPlayi
 	}
 
 	//To close game
-	else if (menu.checkExitButtonPressed())
+	else if (menu.isExitButtonPressed())
 		currentScreen = Screen::EXIT;
 
 }
@@ -188,27 +233,48 @@ void initializePlayers(Player* player1, Player* player2) {
 	player1->playerType = PlayerType::PT_HUMAN;
 	player2->playerType = PlayerType::PT_AI;
 
-	if (rand() % 2 == 0) {
-		player1->elementType = 'X';
-		player2->elementType = 'O';
+	player1->playersGrid = PlayersGrid::PG_HUMAN;
+	player2->playersGrid = PlayersGrid::PG_AI;
 
+	if (rand() % 2 == 0) {
 		player1->elementTexture.load_media_from_file("assets/Sprites/X.png");
 		player2->elementTexture.load_media_from_file("assets/Sprites/O.png");
-
 	}
 	else {
-		player1->elementType = 'O';
-		player2->elementType = 'X';
-
 		player1->elementTexture.load_media_from_file("assets/Sprites/O.png");
 		player2->elementTexture.load_media_from_file("assets/Sprites/X.png");
 	}
 }
 
-void checkPlayerPlayed(Game& game, Player** currentPlayer, Player** otherPlayer) {
+void hasPlayerPlayed(Game& game, Player** currentPlayer, Player** otherPlayer, AIStratergy& stratergy) {
 
-	if (game.checkButtonPressed(*currentPlayer))
+	//If it's players chance
+	if ((*currentPlayer)->playerType == PlayerType::PT_HUMAN) {
+		//Check if player played
+		if (game.isButtonPressed(*currentPlayer))
+			switchPlayers(currentPlayer, otherPlayer);
+		
+		//Check if player played near AI
+		if (game.getAIMoveCount() == 1)
+			game.playerPlayedNearAI();
+	}
+	//If it's AI chance
+	else {
+		GetAIMove(game, *currentPlayer, stratergy);
 		switchPlayers(currentPlayer, otherPlayer);
+	}
+}
+
+void GetAIMove(Game& game,Player* currentPlayer, AIStratergy& stratergy) {
+
+	if (game.isAIWinning(currentPlayer))
+		return;
+	else if (game.isPlayerWinning(currentPlayer))
+		return;
+	else if (stratergy == AIStratergy::AS_ATTACK)
+		game.aiAttackStartergy(currentPlayer);
+	else if (stratergy == AIStratergy::AS_DEFENCE)
+		game.aiDefenceStratergy(currentPlayer);
 }
 
 void switchPlayers(Player** currentPlayer, Player** otherPlayer)

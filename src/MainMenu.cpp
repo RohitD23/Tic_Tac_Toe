@@ -92,7 +92,7 @@ void MainMenu::changeSoundText(std::string text) {
 	sound.load_button_media(text, 60, { 255, 255, 255, 255 });
 }
 
-bool MainMenu::checkTextureLoaded() {
+bool MainMenu::isTextureLoaded() {
 
 	if (title.Get_Texture() == nullptr)
 		return false;

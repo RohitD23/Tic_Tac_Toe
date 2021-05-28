@@ -1,12 +1,14 @@
 ﻿#pragma once
+#include <tuple>
 #include "Texture.h"
 #include "Button.h"
 #include "Data.h"
 
 struct GridElements {
 	Texture* x_o_image;
-	char x_o;
+	PlayersGrid whoPlayedOnGrid;
 };
+
 
 class Game {
 public:
@@ -20,12 +22,22 @@ public:
 
 	void render();
 
-	void handleEvent(SDL_Event* e, Player* currentPlayer);
+	void handleEvent(SDL_Event* e,const Player* currentPlayer);
 
-	bool checkTextureLoaded();
+	bool isTextureLoaded();
 
-	bool checkButtonPressed(Player* currentPlayer);
+	//Get what player played
+	bool isButtonPressed(Player* currentPlayer);
 
+	bool isPlayerWinning(Player* currentPlayer);
+	bool isAIWinning(Player* currentPlayer);
+
+	void aiAttackStartergy(Player* currentPlayer);
+	void aiDefenceStratergy(Player* currentPlayer);
+	void playerPlayedNearAI();
+
+	int getAIMoveCount() { return aiMoveCount; }
+	
 private:
 	//No. of Boxes on board
 	const int static TOTAL_BOX = 3 ;
@@ -42,10 +54,24 @@ private:
 	//Score board
 	Texture scoreBoard;
 
+	//For what Move number ai is on
+	int aiMoveCount;
+	//For where AI has Played
+	std::pair <int, int> ai_move;
+	bool hasPlayerPlayedNearAI;
+
 	void loadGridBoxes();
 	void renderGridBoxes();
 
 	void loadGridElements();
 	void renderGridElements();
 
+	void changeGridElements(int x, int y, Player* currentPlayer);
+
+	void aiFirstMove(Player* currentPlayer);
+	void isCornerEmpty(Player* cuurentPlayer);
+	void playNearFirstMove(Player* currentPlayer);
+	void playNearMove(Player* currentPlayer);
+	void randomMove(Player* currentPlayer);
 };
+
