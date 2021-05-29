@@ -1,3 +1,4 @@
+#include <sstream>
 #include "Window.h"
 #include "MainMenu.h"
 #include "Game.h"
@@ -16,6 +17,9 @@ void loadMusic(Mix_Music* music, bool& isMusicPlaying);
 
 //Check if button is pressed in Menu
 void isMenuButtonPressed(MainMenu& menu, Mix_Music* music, bool& isMusicPlaying);
+
+//Check if button is pressed in RoundSelect
+void isRoundSelectButtonPreesed(RoundSelect& roundSelect, int& totalRounds);
 
 //Check if player played
 void hasPlayerPlayed(Game& game, Player** currentPlayer, Player** otherPlayer, AIStratergy& stratergy);
@@ -49,6 +53,9 @@ void PlayGame() {
 
 	Player* currentPlayer;
 	Player* otherPlayer;
+
+	//Number of rounds to play
+	int totalRounds = 5;
 
 	//Decide who goes first
 	if (rand() % 2 != 0) {
@@ -144,6 +151,8 @@ void PlayGame() {
 				if (!roundSelect.isTextureLoaded())
 					roundSelect.loadMedia();
 
+				isRoundSelectButtonPreesed(roundSelect, totalRounds);
+
 				//Render round select
 				roundSelect.render();
 			}
@@ -226,6 +235,39 @@ void isMenuButtonPressed(MainMenu& menu, Mix_Music* music, bool& isMusicPlaying)
 	else if (menu.isExitButtonPressed())
 		currentScreen = Screen::EXIT;
 
+}
+
+void isRoundSelectButtonPreesed(RoundSelect& roundSelect, int& totalRounds) {
+
+	std::stringstream ss;
+
+	//Load Font file
+	*GameWindow.Get_Font() = TTF_OpenFont("assets/Font/NunitoSans.ttf", 90);
+
+	if (roundSelect.isDecreaseNumberPressed()) {
+		roundSelect.setDecreaseNumberPressed(false);
+		if (totalRounds != 5) {
+			totalRounds -= 5;
+
+			if (totalRounds == 5) {
+				ss << "0" << totalRounds;
+			}
+			else
+				ss << totalRounds;
+
+			roundSelect.getNumberText()->loadFromRenderedText(ss.str(), { 255, 255, 255, 255 }, 600);
+		}
+	}
+	else if (roundSelect.isIncreaseNumberPressed()) {
+		roundSelect.setIncreaseNumberPressed(false);
+		if (totalRounds != 15) {
+			totalRounds += 5;
+			ss << totalRounds;
+			roundSelect.getNumberText()->loadFromRenderedText(ss.str(), { 255, 255, 255, 255 }, 600);
+		}
+	}
+	else if (roundSelect.isStartGamePressed())
+		currentScreen = Screen::GAME_SCREEN;
 }
 
 void initializePlayers(Player* player1, Player* player2) {
