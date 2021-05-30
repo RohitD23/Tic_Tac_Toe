@@ -4,8 +4,6 @@
 
 class MainMenu {
 public:
-	MainMenu();
-
 	~MainMenu();
 
 	void free();

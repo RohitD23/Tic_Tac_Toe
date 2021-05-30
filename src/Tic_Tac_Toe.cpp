@@ -22,7 +22,7 @@ void isMenuButtonPressed(MainMenu& menu, Mix_Music* music, bool& isMusicPlaying)
 void isRoundSelectButtonPreesed(RoundSelect& roundSelect, int& totalRounds);
 
 //Check if player played
-void hasPlayerPlayed(Game& game, Player** currentPlayer, Player** otherPlayer, AIStratergy& stratergy);
+void hasPlayerPlayed(Game& game, Player** currentPlayer, Player** otherPlayer, AIStratergy& stratergy, int totalRounds);
 //Get what A.I played
 void GetAIMove(Game& game, Player* currentPlayer, AIStratergy& stratergy);
 
@@ -30,6 +30,8 @@ void GetAIMove(Game& game, Player* currentPlayer, AIStratergy& stratergy);
 void initializePlayers(Player* player1, Player* player2);
 //Switch player after their turn
 void switchPlayers(Player** currentPlayer, Player** otherPlayer);
+
+bool isGameOver(Game& game, int totalRounds);
 
 void PlayGame() {
 
@@ -170,7 +172,7 @@ void PlayGame() {
 				if (!game.isTextureLoaded())
 					game.loadMedia();
 
-				hasPlayerPlayed(game, &currentPlayer, &otherPlayer, stratergy);
+				hasPlayerPlayed(game, &currentPlayer, &otherPlayer, stratergy, totalRounds);
 
 				//Render game
 				game.render();
@@ -288,10 +290,12 @@ void initializePlayers(Player* player1, Player* player2) {
 	}
 }
 
-void hasPlayerPlayed(Game& game, Player** currentPlayer, Player** otherPlayer, AIStratergy& stratergy) {
+void hasPlayerPlayed(Game& game, Player** currentPlayer, Player** otherPlayer, AIStratergy& stratergy, int totalRounds) {
 
+	if (isGameOver(game, totalRounds))
+		return;
 	//If it's players chance
-	if ((*currentPlayer)->playerType == PlayerType::PT_HUMAN) {
+	else if ((*currentPlayer)->playerType == PlayerType::PT_HUMAN) {
 		//Check if player played
 		if (game.isButtonPressed(*currentPlayer))
 			switchPlayers(currentPlayer, otherPlayer);
@@ -324,6 +328,18 @@ void switchPlayers(Player** currentPlayer, Player** otherPlayer)
 	Player* temp = *currentPlayer;
 	*currentPlayer = *otherPlayer;
 	*otherPlayer = temp;
+}
+
+bool isGameOver(Game& game, int totalRounds) {
+
+	if (game.getRoundsPlayed() > totalRounds)
+		currentScreen = Screen::GAMEOVER_SCREEN;
+	else if (game.isGridFull())
+		return true;
+	else if (game.hasAnyoneWon())
+		return true;
+
+	return false;
 }
 
 void close(Mix_Music* music) {

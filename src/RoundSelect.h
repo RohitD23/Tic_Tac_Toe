@@ -4,8 +4,6 @@
 
 class RoundSelect {
 public:
-	RoundSelect();
-
 	~RoundSelect();
 
 	void free();

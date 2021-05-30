@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include <tuple>
+#include <sstream>
 #include "Texture.h"
 #include "Button.h"
 #include "Data.h"
@@ -12,8 +12,6 @@ struct GridElements {
 
 class Game {
 public:
-	Game();
-
 	~Game();
 
 	void free();
@@ -29,6 +27,9 @@ public:
 	//Get what player played
 	bool isButtonPressed(Player* currentPlayer);
 
+	bool isGridFull();
+	bool hasAnyoneWon();
+
 	bool isPlayerWinning(Player* currentPlayer);
 	bool isAIWinning(Player* currentPlayer);
 
@@ -37,13 +38,24 @@ public:
 	void playerPlayedNearAI();
 
 	int getAIMoveCount() { return aiMoveCount; }
+
+	int getRoundsPlayed() { return roundsPlayed; }
+	int getPlayerWinCount() { return playerWinCount; }
+	int getaiWinCount() { return aiWinCount; }
 	
 private:
 	//No. of Boxes on board
 	const int static TOTAL_BOX = 3 ;
 
+
 	//Board image
 	Texture board;
+
+	//Text on Score Board
+	Texture scoreText[4];
+	Texture currentRound;
+	Texture playerScore;
+	Texture aiScore;
 
 	//Represents each box in board
 	Button* gridBoxes[TOTAL_BOX][TOTAL_BOX];
@@ -54,6 +66,10 @@ private:
 	//Score board
 	Texture scoreBoard;
 
+	int roundsPlayed;
+	int playerWinCount;
+	int aiWinCount;
+
 	//For what Move number ai is on
 	int aiMoveCount;
 	//For where AI has Played
@@ -62,6 +78,12 @@ private:
 
 	void loadGridBoxes();
 	void renderGridBoxes();
+
+	void loadScoreBoard();
+	void loadCurrentRound();
+	void loadPlayerScore();
+	void loadAiScore();
+	void renderScoreBoard();
 
 	void loadGridElements();
 	void renderGridElements();
@@ -73,5 +95,7 @@ private:
 	void playNearFirstMove(Player* currentPlayer);
 	void playNearMove(Player* currentPlayer);
 	void randomMove(Player* currentPlayer);
+
+	void cleanBoard();
 };
 

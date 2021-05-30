@@ -1,9 +1,5 @@
 ﻿#include "MainMenu.h"
 
-MainMenu::MainMenu() {
-	load_media();
-}
-
 MainMenu::~MainMenu() { 
 	free(); 
 }

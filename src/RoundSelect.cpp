@@ -1,9 +1,5 @@
 ﻿#include "RoundSelect.h"
 
-RoundSelect::RoundSelect() {
-	loadMedia();
-}
-
 RoundSelect::~RoundSelect() {
 	free();
 }

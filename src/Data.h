@@ -6,6 +6,7 @@ enum class Screen {
 	MENU_SCREEN = 0,
 	ROUND_SELECT,
 	GAME_SCREEN,
+	GAMEOVER_SCREEN,
 	EXIT
 };
 

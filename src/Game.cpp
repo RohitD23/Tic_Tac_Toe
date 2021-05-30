@@ -1,9 +1,5 @@
 ﻿#include "Game.h"
 
-Game::Game() {
-	loadMedia();
-}
-
 Game::~Game() {
 	free();
 }
@@ -11,6 +7,10 @@ Game::~Game() {
 void Game::free() {
 	board.free();
 	scoreBoard.free();
+
+	roundsPlayed = 1;
+	playerWinCount = 0;
+	aiWinCount = 0;
 
 	aiMoveCount = 0;
 	hasPlayerPlayedNearAI = false;
@@ -28,19 +28,66 @@ void Game::free() {
 }
 
 void Game::loadMedia() {
+
+	roundsPlayed = 1;
+	playerWinCount = 0;
+	aiWinCount = 0;
+
+	aiMoveCount = 0;
+	hasPlayerPlayedNearAI = false;
+
 	//Load Board
 	board.load_media_from_file("assets/Sprites/Board.png");
 
-	//Load Score board
-	scoreBoard.load_media_from_file("assets/Sprites/ScoreBoard.png");
+	//Load Score Board
+	loadScoreBoard();
 
 	//Load Boxes
 	loadGridBoxes();
 
 	loadGridElements();
 
-	aiMoveCount = 0;
-	hasPlayerPlayedNearAI = false;
+}
+
+void Game::loadScoreBoard() {
+	//Load Score board
+	scoreBoard.load_media_from_file("assets/Sprites/ScoreBoard.png");
+
+	//Load Font file
+	*GameWindow.Get_Font() = TTF_OpenFont("assets/Font/Cocogoose.ttf", 30);
+
+	//Score text
+	scoreText[0].loadFromRenderedText("Round :", { 255, 255, 255, 255 }, 500);
+	scoreText[1].loadFromRenderedText("Score", { 255, 255, 255, 255 }, 500);
+	scoreText[2].loadFromRenderedText("Player :", { 255, 255, 255, 255 }, 500);
+	scoreText[3].loadFromRenderedText("A.I. :", { 255, 255, 255, 255 }, 500);
+
+	//Load Font file
+	*GameWindow.Get_Font() = TTF_OpenFont("assets/Font/NunitoSans.ttf", 30);
+
+	loadCurrentRound();
+
+	loadPlayerScore();
+
+	loadAiScore();
+}
+
+void Game::loadCurrentRound() {
+	std::stringstream ss;
+	ss << roundsPlayed;
+	currentRound.loadFromRenderedText(ss.str(), { 255, 255, 255, 255 }, 500);
+}
+
+void Game::loadPlayerScore() {
+	std::stringstream ss;
+	ss << playerWinCount;
+	playerScore.loadFromRenderedText(ss.str(), { 255, 255, 255, 255 }, 500);
+}
+
+void Game::loadAiScore() {
+	std::stringstream ss;
+	ss << aiWinCount;
+	aiScore.loadFromRenderedText(ss.str(), { 255, 255, 255, 255 }, 500);
 }
 
 void Game::loadGridBoxes() {
@@ -79,8 +126,7 @@ void Game::render() {
 	//Render whole window with set color
 	SDL_RenderClear(GameWindow.Get_Renderer());
 
-	//Render Score Board
-	scoreBoard.renderTexture(nullptr, WINDOW_WIDTH - 220, WINDOW_HEIGHT - 390);
+	renderScoreBoard();
 
 	//Render board on screen
 	board.renderTexture(nullptr, WINDOW_WIDTH - 250, WINDOW_HEIGHT - 200);
@@ -93,6 +139,21 @@ void Game::render() {
 
 	//Update window
 	SDL_RenderPresent(GameWindow.Get_Renderer());
+}
+
+void Game::renderScoreBoard() {
+	//Render Score Board
+	scoreBoard.renderTexture(nullptr, WINDOW_WIDTH - 220, WINDOW_HEIGHT - 390);
+
+	//Render Score Text
+	scoreText[0].renderTexture(nullptr, WINDOW_WIDTH - 70, WINDOW_HEIGHT - 375);
+	scoreText[1].renderTexture(nullptr, WINDOW_WIDTH - 45, WINDOW_HEIGHT - 335);
+	scoreText[2].renderTexture(nullptr, WINDOW_WIDTH - 200, WINDOW_HEIGHT - 290);
+	scoreText[3].renderTexture(nullptr, WINDOW_WIDTH + 20, WINDOW_HEIGHT - 290);
+
+	currentRound.renderTexture(nullptr, WINDOW_WIDTH + 70, WINDOW_HEIGHT - 375);
+	playerScore.renderTexture(nullptr, WINDOW_WIDTH - 60, WINDOW_HEIGHT - 290);
+	aiScore.renderTexture(nullptr, WINDOW_WIDTH + 100, WINDOW_HEIGHT - 290);
 }
 
 void Game::renderGridBoxes() {
@@ -171,6 +232,155 @@ void Game::changeGridElements(int x, int y, Player* currentPlayer) {
 	gridElements[x][y]->x_o_image = &(currentPlayer->elementTexture);
 	//initialize who played
 	gridElements[x][y]->whoPlayedOnGrid = currentPlayer->playersGrid;
+}
+
+bool Game::isGridFull() {
+
+	int gridRecored = 0;
+
+	for (int i{ 0 }; i < TOTAL_BOX; i++) {
+		for (int j{ 0 }; j < TOTAL_BOX - 2; j++) {
+
+			if (gridElements[i][j]->whoPlayedOnGrid != PlayersGrid::PG_NONE &&
+				gridElements[i][j + 1]->whoPlayedOnGrid != PlayersGrid::PG_NONE &&
+				gridElements[i][j + 2]->whoPlayedOnGrid != PlayersGrid::PG_NONE) {
+				gridRecored++;
+			}
+		}
+	}
+	
+	if (gridRecored == 3) {
+		cleanBoard();
+		return true;
+	}
+
+	return false;
+}
+
+bool Game::hasAnyoneWon() {
+
+	//For Horizontal
+	for (int i{ 0 }; i < TOTAL_BOX; i++) {
+		for (int j{ 0 }; j < TOTAL_BOX - 2; j++) {
+
+			if (gridElements[i][j]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN &&
+				gridElements[i][j + 1]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN &&
+				gridElements[i][j + 2]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN) 
+			{
+				cleanBoard();
+
+				playerWinCount++;
+				loadPlayerScore();
+
+				return true;
+			}
+			else if (gridElements[i][j]->whoPlayedOnGrid == PlayersGrid::PG_AI &&
+				gridElements[i][j + 1]->whoPlayedOnGrid == PlayersGrid::PG_AI &&
+				gridElements[i][j + 2]->whoPlayedOnGrid == PlayersGrid::PG_AI)
+			{
+				cleanBoard();
+
+				aiWinCount++;
+				loadAiScore();
+
+				return true;
+			}
+		}
+	}
+
+	//For Vertical
+	for (int i{ 0 }; i < TOTAL_BOX; i++) {
+		for (int j{ 0 }; j < TOTAL_BOX - 2; j++) {
+
+			if (gridElements[j][i]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN &&
+				gridElements[j + 1][i]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN &&
+				gridElements[j + 2][i]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN)
+			{
+				cleanBoard();
+
+				playerWinCount++;
+				loadPlayerScore();
+
+				return true;
+			}
+			else if (gridElements[j][i]->whoPlayedOnGrid == PlayersGrid::PG_AI &&
+				gridElements[j + 1][i]->whoPlayedOnGrid == PlayersGrid::PG_AI &&
+				gridElements[j + 2][i]->whoPlayedOnGrid == PlayersGrid::PG_AI)
+			{
+				cleanBoard();
+
+				aiWinCount++;
+				loadAiScore();
+
+				return true;
+			}
+		}
+	}
+
+	//For Cross from left
+	if (gridElements[0][0]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN &&
+		gridElements[1][1]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN &&
+		gridElements[2][2]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN)
+	{
+		cleanBoard();
+
+		playerWinCount++;
+		loadPlayerScore();
+
+		return true;
+	}
+	else if (gridElements[0][0]->whoPlayedOnGrid == PlayersGrid::PG_AI &&
+		gridElements[1][1]->whoPlayedOnGrid == PlayersGrid::PG_AI &&
+		gridElements[2][2]->whoPlayedOnGrid == PlayersGrid::PG_AI)
+	{
+		cleanBoard();
+
+		aiWinCount++;
+		loadAiScore();
+
+		return true;
+	}
+
+	//For Cross from right
+	if (gridElements[0][2]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN &&
+		gridElements[1][1]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN &&
+		gridElements[2][0]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN)
+	{
+		cleanBoard();
+
+		playerWinCount++;
+		loadPlayerScore();
+
+		return true;
+	}
+	else if (gridElements[0][2]->whoPlayedOnGrid == PlayersGrid::PG_AI &&
+		gridElements[1][1]->whoPlayedOnGrid == PlayersGrid::PG_AI &&
+		gridElements[2][0]->whoPlayedOnGrid == PlayersGrid::PG_AI)
+	{
+		cleanBoard();
+
+		aiWinCount++;
+		loadAiScore();
+
+		return true;
+	}
+	
+	return false;
+}
+
+void Game::cleanBoard() {
+	for (int i{ 0 }; i < TOTAL_BOX; i++) {
+		for (int j{ 0 }; j < TOTAL_BOX; j++) {
+			delete gridElements[i][j];
+			gridElements[i][j] = nullptr;
+			gridElements[i][j] = new GridElements();
+
+			loadGridBoxes();
+		}
+	}
+	roundsPlayed++;
+
+	loadCurrentRound();
 }
 
 bool Game::isPlayerWinning(Player* currentPlayer) {
