@@ -9,6 +9,15 @@ struct GridElements {
 	PlayersGrid whoPlayedOnGrid;
 };
 
+enum class GridAlignment
+{
+	GA_NONE = 0,
+	GA_HORIZONTAL,
+	GA_VERTICAL,
+	GA_LEFTCROSS,
+	GA_RIGHTCROSS
+};
+
 
 class Game {
 public:
@@ -39,9 +48,9 @@ public:
 
 	int getAIMoveCount() { return aiMoveCount; }
 
-	int getRoundsPlayed() { return roundsPlayed; }
-	int getPlayerWinCount() { return playerWinCount; }
-	int getaiWinCount() { return aiWinCount; }
+	int getCurrentRound() const { return currentRound; }
+	int getPlayerWinCount() const  { return playerWinCount; }
+	int getaiWinCount() const { return aiWinCount; }
 	
 private:
 	//No. of Boxes on board
@@ -53,7 +62,7 @@ private:
 
 	//Text on Score Board
 	Texture scoreText[4];
-	Texture currentRound;
+	Texture roundsPlayed;
 	Texture playerScore;
 	Texture aiScore;
 
@@ -66,7 +75,7 @@ private:
 	//Score board
 	Texture scoreBoard;
 
-	int roundsPlayed;
+	int currentRound;
 	int playerWinCount;
 	int aiWinCount;
 
@@ -75,6 +84,13 @@ private:
 	//For where AI has Played
 	std::pair <int, int> ai_move;
 	bool hasPlayerPlayedNearAI;
+
+	//To check if someone has won
+	bool isRoundOver;
+	//To color grid where someone has won
+	SDL_Rect colorGrid[3];
+	//To color in which direction 
+	GridAlignment gridAlignment;
 
 	void loadGridBoxes();
 	void renderGridBoxes();
@@ -93,9 +109,11 @@ private:
 	void aiFirstMove(Player* currentPlayer);
 	void isCornerEmpty(Player* cuurentPlayer);
 	void playNearFirstMove(Player* currentPlayer);
-	void playNearMove(Player* currentPlayer);
 	void randomMove(Player* currentPlayer);
 
 	void cleanBoard();
+
+	//Set Position of colorGrid where to color grid
+	void setColorGridLoaction(int x);
 };
 

@@ -17,7 +17,7 @@ public:
 	//Handles mouse event
 	void handleEvent(SDL_Event* e);
 
-	bool get_isButtonPressed() { return isButtonPressed; }
+	bool get_isButtonPressed()  const { return isButtonPressed; }
 	void set_isButtonPressed(bool isButtonPressed) { this->isButtonPressed = isButtonPressed; }
 
 	int get_Width() { return ButtonText.Get_Width(); }

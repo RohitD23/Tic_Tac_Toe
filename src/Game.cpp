@@ -8,12 +8,21 @@ void Game::free() {
 	board.free();
 	scoreBoard.free();
 
-	roundsPlayed = 1;
+	for (auto& text : scoreText)
+		text.free();
+
+	roundsPlayed.free();
+	aiScore.free();
+	playerScore.free();
+
+	currentRound = 1;
 	playerWinCount = 0;
 	aiWinCount = 0;
 
 	aiMoveCount = 0;
 	hasPlayerPlayedNearAI = false;
+
+	isRoundOver = false;
 
 	for (int i{ 0 }; i < TOTAL_BOX; i++) {
 
@@ -29,12 +38,15 @@ void Game::free() {
 
 void Game::loadMedia() {
 
-	roundsPlayed = 1;
+	currentRound = 1;
 	playerWinCount = 0;
 	aiWinCount = 0;
 
 	aiMoveCount = 0;
 	hasPlayerPlayedNearAI = false;
+
+	isRoundOver = false;
+	gridAlignment = GridAlignment::GA_NONE;
 
 	//Load Board
 	board.load_media_from_file("assets/Sprites/Board.png");
@@ -74,8 +86,8 @@ void Game::loadScoreBoard() {
 
 void Game::loadCurrentRound() {
 	std::stringstream ss;
-	ss << roundsPlayed;
-	currentRound.loadFromRenderedText(ss.str(), { 255, 255, 255, 255 }, 500);
+	ss << currentRound;
+	roundsPlayed.loadFromRenderedText(ss.str(), { 255, 255, 255, 255 }, 500);
 }
 
 void Game::loadPlayerScore() {
@@ -110,6 +122,11 @@ void Game::loadGridBoxes() {
 		}
 	}
 
+	for (auto& rect : colorGrid) {
+		rect.w = dimension;
+		rect.h = dimension;
+	}
+
 }
 
 void Game::loadGridElements() {
@@ -128,6 +145,15 @@ void Game::render() {
 
 	renderScoreBoard();
 
+	//Set color of window
+	SDL_SetRenderDrawColor(GameWindow.Get_Renderer(), 50, 205, 50, 255);
+
+	if (isRoundOver) 
+		SDL_RenderFillRects(GameWindow.Get_Renderer(), colorGrid, 3);
+
+	//Set color of window
+	SDL_SetRenderDrawColor(GameWindow.Get_Renderer(), 0, 135, 175, 255);
+
 	//Render board on screen
 	board.renderTexture(nullptr, WINDOW_WIDTH - 250, WINDOW_HEIGHT - 200);
 
@@ -139,6 +165,12 @@ void Game::render() {
 
 	//Update window
 	SDL_RenderPresent(GameWindow.Get_Renderer());
+
+	if (isRoundOver) {
+		cleanBoard();
+		isRoundOver = false;
+		SDL_Delay(1000);
+	}
 }
 
 void Game::renderScoreBoard() {
@@ -151,7 +183,7 @@ void Game::renderScoreBoard() {
 	scoreText[2].renderTexture(nullptr, WINDOW_WIDTH - 200, WINDOW_HEIGHT - 290);
 	scoreText[3].renderTexture(nullptr, WINDOW_WIDTH + 20, WINDOW_HEIGHT - 290);
 
-	currentRound.renderTexture(nullptr, WINDOW_WIDTH + 70, WINDOW_HEIGHT - 375);
+	roundsPlayed.renderTexture(nullptr, WINDOW_WIDTH + 70, WINDOW_HEIGHT - 375);
 	playerScore.renderTexture(nullptr, WINDOW_WIDTH - 60, WINDOW_HEIGHT - 290);
 	aiScore.renderTexture(nullptr, WINDOW_WIDTH + 100, WINDOW_HEIGHT - 290);
 }
@@ -251,6 +283,7 @@ bool Game::isGridFull() {
 	
 	if (gridRecored == 3) {
 		cleanBoard();
+		SDL_Delay(1000);
 		return true;
 	}
 
@@ -267,10 +300,12 @@ bool Game::hasAnyoneWon() {
 				gridElements[i][j + 1]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN &&
 				gridElements[i][j + 2]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN) 
 			{
-				cleanBoard();
-
+				isRoundOver = true;
 				playerWinCount++;
 				loadPlayerScore();
+
+				gridAlignment = GridAlignment::GA_HORIZONTAL;
+				setColorGridLoaction(i);
 
 				return true;
 			}
@@ -278,10 +313,12 @@ bool Game::hasAnyoneWon() {
 				gridElements[i][j + 1]->whoPlayedOnGrid == PlayersGrid::PG_AI &&
 				gridElements[i][j + 2]->whoPlayedOnGrid == PlayersGrid::PG_AI)
 			{
-				cleanBoard();
-
+				isRoundOver = true;
 				aiWinCount++;
 				loadAiScore();
+
+				gridAlignment = GridAlignment::GA_HORIZONTAL;
+				setColorGridLoaction(i);
 
 				return true;
 			}
@@ -296,10 +333,12 @@ bool Game::hasAnyoneWon() {
 				gridElements[j + 1][i]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN &&
 				gridElements[j + 2][i]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN)
 			{
-				cleanBoard();
-
+				isRoundOver = true;
 				playerWinCount++;
 				loadPlayerScore();
+
+				gridAlignment = GridAlignment::GA_VERTICAL;
+				setColorGridLoaction(i);
 
 				return true;
 			}
@@ -307,10 +346,12 @@ bool Game::hasAnyoneWon() {
 				gridElements[j + 1][i]->whoPlayedOnGrid == PlayersGrid::PG_AI &&
 				gridElements[j + 2][i]->whoPlayedOnGrid == PlayersGrid::PG_AI)
 			{
-				cleanBoard();
-
+				isRoundOver = true;
 				aiWinCount++;
 				loadAiScore();
+
+				gridAlignment = GridAlignment::GA_VERTICAL;
+				setColorGridLoaction(i);
 
 				return true;
 			}
@@ -322,10 +363,12 @@ bool Game::hasAnyoneWon() {
 		gridElements[1][1]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN &&
 		gridElements[2][2]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN)
 	{
-		cleanBoard();
-
+		isRoundOver = true;
 		playerWinCount++;
 		loadPlayerScore();
+
+		gridAlignment = GridAlignment::GA_LEFTCROSS;
+		setColorGridLoaction(0);
 
 		return true;
 	}
@@ -333,10 +376,12 @@ bool Game::hasAnyoneWon() {
 		gridElements[1][1]->whoPlayedOnGrid == PlayersGrid::PG_AI &&
 		gridElements[2][2]->whoPlayedOnGrid == PlayersGrid::PG_AI)
 	{
-		cleanBoard();
-
+		isRoundOver = true;
 		aiWinCount++;
 		loadAiScore();
+
+		gridAlignment = GridAlignment::GA_LEFTCROSS;
+		setColorGridLoaction(0);
 
 		return true;
 	}
@@ -346,10 +391,12 @@ bool Game::hasAnyoneWon() {
 		gridElements[1][1]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN &&
 		gridElements[2][0]->whoPlayedOnGrid == PlayersGrid::PG_HUMAN)
 	{
-		cleanBoard();
-
+		isRoundOver = true;
 		playerWinCount++;
 		loadPlayerScore();
+
+		gridAlignment = GridAlignment::GA_RIGHTCROSS;
+		setColorGridLoaction(0);
 
 		return true;
 	}
@@ -357,10 +404,12 @@ bool Game::hasAnyoneWon() {
 		gridElements[1][1]->whoPlayedOnGrid == PlayersGrid::PG_AI &&
 		gridElements[2][0]->whoPlayedOnGrid == PlayersGrid::PG_AI)
 	{
-		cleanBoard();
-
+		isRoundOver = true;
 		aiWinCount++;
 		loadAiScore();
+
+		gridAlignment = GridAlignment::GA_RIGHTCROSS;
+		setColorGridLoaction(0);
 
 		return true;
 	}
@@ -378,7 +427,8 @@ void Game::cleanBoard() {
 			loadGridBoxes();
 		}
 	}
-	roundsPlayed++;
+	currentRound++;
+	aiMoveCount = 0;
 
 	loadCurrentRound();
 }
@@ -623,13 +673,13 @@ void Game::aiDefenceStratergy(Player* currentPlayer) {
 	
 	if (aiMoveCount == 0 && gridElements[1][1]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
 		if (rand() % 2 == 0)
-			aiFirstMove(currentPlayer);
+			isCornerEmpty(currentPlayer);
 		else {
 			changeGridElements(1, 1, currentPlayer);
 		}
 	}
 	else
-		playNearMove(currentPlayer);
+		randomMove(currentPlayer);
 	
 }
 
@@ -640,7 +690,7 @@ void Game::aiFirstMove(Player* currentPlayer) {
 	do {
 		x = rand() % TOTAL_BOX;
 		y = rand() % TOTAL_BOX;
-	} while (x == 1 || y == 1);
+	} while ((x == 1 || y == 1));
 
 	ai_move = { x, y };
 
@@ -797,160 +847,6 @@ void Game::playNearFirstMove(Player* currentPlayer) {
 	aiMoveCount++;
 }
 
-void Game::playNearMove(Player* currentPlayer) {
-	
-	//For Horizontal
-	for (int i{ 0 }; i < TOTAL_BOX; i++) {
-		for (int j{ 0 }; j < TOTAL_BOX; j++) {
-
-			if (gridElements[i][j]->whoPlayedOnGrid == PlayersGrid::PG_AI) {
-				if (j == 0) {
-					if (gridElements[i][j + 1]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-						changeGridElements(i, j + 1, currentPlayer);
-						return;
-					}
-					else if (gridElements[i][j + 2]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-						changeGridElements(i, j + 2, currentPlayer);
-						return;
-					}
-				}
-				else if(j == 1){
-					if (gridElements[i][j - 1]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-						changeGridElements(i, j - 1, currentPlayer);
-						return;
-					}
-					else if (gridElements[i][j + 1]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-						changeGridElements(i, j + 1, currentPlayer);
-						return;
-					}
-				}
-				else if (j == 2) {
-					if (gridElements[i][j - 1]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-						changeGridElements(i, j - 1, currentPlayer);
-						return;
-					}
-					else if (gridElements[i][j - 2]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-						changeGridElements(i, j - 2, currentPlayer);
-						return;
-					}
-				}
-			}
-		}
-	}
-
-	//For Vertical
-	for (int i{ 0 }; i < TOTAL_BOX; i++) {
-		for (int j{ 0 }; j < TOTAL_BOX; j++) {
-
-			if (gridElements[j][i]->whoPlayedOnGrid == PlayersGrid::PG_AI) {
-				if (j == 0) {
-					if (gridElements[j + 1][i]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-						changeGridElements(j + 1, i, currentPlayer);
-						return;
-					}
-					else if (gridElements[j + 2][i]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-						changeGridElements(j + 2, i, currentPlayer);
-						return;
-					}
-				}
-				else if (j == 1) {
-					if (gridElements[j - 1][i]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-						changeGridElements(j - 1, i, currentPlayer);
-						return;
-					}
-					else if (gridElements[j + 1][i]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-						changeGridElements(j + 1, i, currentPlayer);
-						return;
-					}
-				}
-				else if (j == 2) {
-					if (gridElements[j - 1][i]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-						changeGridElements(j - 1, i, currentPlayer);
-						return;
-					}
-					else if (gridElements[j - 2][i]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-						changeGridElements(j - 2, i, currentPlayer);
-						return;
-					}
-				}
-			}
-		}
-	}
-
-	//For Left Cross
-	for (int i{ 0 }, j{ 0 }; i < TOTAL_BOX; i++, j++) {
-		
-		if (gridElements[i][j]->whoPlayedOnGrid == PlayersGrid::PG_AI) {
-			if (j == 0) {
-				if (gridElements[i + 1][j + 1]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-					changeGridElements(i + 1, j + 1, currentPlayer);
-					return;
-				}
-				else if (gridElements[i + 2][j + 2]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-					changeGridElements(i + 2, j + 2, currentPlayer);
-					return;
-				}
-			}
-			else if (j == 1) {
-				if (gridElements[i - 1][j - 1]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-					changeGridElements(i - 1, j - 1, currentPlayer);
-					return;
-				}
-				else if (gridElements[i + 1][j + 1]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-					changeGridElements(i + 1, j + 1, currentPlayer);
-					return;
-				}
-			}
-			else if (j == 2) {
-				if (gridElements[i - 1][j - 1]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-					changeGridElements(i - 1, j - 1, currentPlayer);
-					return;
-				}
-				else if (gridElements[i - 2][j - 2]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-					changeGridElements(i - 2, j - 2, currentPlayer);
-					return;
-				}
-			}
-		}
-	}
-
-	//For Right Croos
-	for (int i{ 0 }, j{ 2 }; i < TOTAL_BOX; i++, j--) {
-		if (gridElements[i][j]->whoPlayedOnGrid == PlayersGrid::PG_AI) {
-			if (i == 0) {
-				if (gridElements[i + 1][j - 1]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-					changeGridElements(i + 1, j - 1, currentPlayer);
-					return;
-				}
-				else if (gridElements[i + 2][j - 2]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-					changeGridElements(i + 2, j - 2, currentPlayer);
-					return;
-				}
-			}
-			else if (i == 1) {
-				if (gridElements[i - 1][j + 1]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-					changeGridElements(i - 1, j + 1, currentPlayer);
-					return;
-				}
-				else if (gridElements[i + 1][j - 1]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-					changeGridElements(i + 1, j - 1, currentPlayer);
-					return;
-				}
-			}
-			else if (i == 2) {
-				if (gridElements[i - 1][j + 1]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-					changeGridElements(i - 1, j + 1, currentPlayer);
-					return;
-				}
-				else if (gridElements[i - 2][j + 2]->whoPlayedOnGrid == PlayersGrid::PG_NONE) {
-					changeGridElements(i - 2, j + 2, currentPlayer);
-					return;
-				}
-			}
-		}
-	}
-}
-
 void Game::randomMove(Player* currentPlayer) {
 	int x, y;
 
@@ -962,3 +858,91 @@ void Game::randomMove(Player* currentPlayer) {
 	changeGridElements(x, y, currentPlayer);
 }
 
+void Game::setColorGridLoaction(int x) {
+
+	if (gridAlignment == GridAlignment::GA_HORIZONTAL) {
+
+		if (x == 0) {
+			colorGrid[0].x = WINDOW_WIDTH - 232;
+			colorGrid[0].y = WINDOW_HEIGHT - 183;
+
+			colorGrid[1].x = WINDOW_WIDTH - 73;
+			colorGrid[1].y = WINDOW_HEIGHT - 183;
+
+			colorGrid[2].x = WINDOW_WIDTH + 85;
+			colorGrid[2].y = WINDOW_HEIGHT - 183;
+		}
+		else if (x == 1) {
+			colorGrid[0].x = WINDOW_WIDTH - 232;
+			colorGrid[0].y = WINDOW_HEIGHT - 25;
+
+			colorGrid[1].x = WINDOW_WIDTH - 73;
+			colorGrid[1].y = WINDOW_HEIGHT - 25;
+
+			colorGrid[2].x = WINDOW_WIDTH + 85;
+			colorGrid[2].y = WINDOW_HEIGHT - 25;
+		}
+		else if (x == 2) {
+			colorGrid[0].x = WINDOW_WIDTH - 232;
+			colorGrid[0].y = WINDOW_HEIGHT + 133;
+
+			colorGrid[1].x = WINDOW_WIDTH - 73;
+			colorGrid[1].y = WINDOW_HEIGHT + 133;
+
+			colorGrid[2].x = WINDOW_WIDTH + 85;
+			colorGrid[2].y = WINDOW_HEIGHT + 133;
+		}
+	}
+	else if (gridAlignment == GridAlignment::GA_VERTICAL) {
+		if (x == 0) {
+			colorGrid[0].x = WINDOW_WIDTH - 232;
+			colorGrid[0].y = WINDOW_HEIGHT - 183;
+
+			colorGrid[1].x = WINDOW_WIDTH - 232;
+			colorGrid[1].y = WINDOW_HEIGHT - 25;
+
+			colorGrid[2].x = WINDOW_WIDTH - 232;
+			colorGrid[2].y = WINDOW_HEIGHT + 133;
+		}
+		else if (x == 1) {
+			colorGrid[0].x = WINDOW_WIDTH - 73;
+			colorGrid[0].y = WINDOW_HEIGHT - 183;
+
+			colorGrid[1].x = WINDOW_WIDTH - 73;
+			colorGrid[1].y = WINDOW_HEIGHT - 25;
+
+			colorGrid[2].x = WINDOW_WIDTH - 73;
+			colorGrid[2].y = WINDOW_HEIGHT + 133;
+		}
+		else if (x == 2) {
+			colorGrid[0].x = WINDOW_WIDTH + 85;
+			colorGrid[0].y = WINDOW_HEIGHT - 183;
+
+			colorGrid[1].x = WINDOW_WIDTH + 85;
+			colorGrid[1].y = WINDOW_HEIGHT - 25;
+
+			colorGrid[2].x = WINDOW_WIDTH + 85;
+			colorGrid[2].y = WINDOW_HEIGHT + 133;
+		}
+	}
+	else if (gridAlignment == GridAlignment::GA_LEFTCROSS) {
+		colorGrid[0].x = WINDOW_WIDTH - 232;
+		colorGrid[0].y = WINDOW_HEIGHT - 183;
+
+		colorGrid[1].x = WINDOW_WIDTH - 73;
+		colorGrid[1].y = WINDOW_HEIGHT - 25;
+
+		colorGrid[2].x = WINDOW_WIDTH + 85;
+		colorGrid[2].y = WINDOW_HEIGHT + 133;
+	}
+	else if (gridAlignment == GridAlignment::GA_RIGHTCROSS) {
+		colorGrid[0].x = WINDOW_WIDTH + 85;
+		colorGrid[0].y = WINDOW_HEIGHT - 183;
+
+		colorGrid[1].x = WINDOW_WIDTH - 73;
+		colorGrid[1].y = WINDOW_HEIGHT - 25;
+
+		colorGrid[2].x = WINDOW_WIDTH - 232;
+		colorGrid[2].y = WINDOW_HEIGHT + 133;
+	}
+}
