@@ -1,6 +1,7 @@
 # Tic_Tac_Toe
 
 Start Screen
+<br>
 ![Screenshot](Images/Start_Screen.png)
 
 Game Screen
