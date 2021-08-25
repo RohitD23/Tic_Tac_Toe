@@ -8,7 +8,7 @@ Start Screen
 Game Screen
 <br>
 <br>
-![Screenshot](Images/Game_Screen)
+![Screenshot](Images/Play_Screen.png)
 
 Win Screen
 <br>
