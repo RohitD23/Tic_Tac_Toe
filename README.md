@@ -1,6 +1,6 @@
 # Tic_Tac_Toe
 
-<h3>Start Screen</h3>
+Start Screen
 ![image](https://user-images.githubusercontent.com/37909750/130730040-fa63200f-3ab9-407c-b873-b69523996ba8.png)
 
 <h3>Game Screen</h3>
